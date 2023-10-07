@@ -7,9 +7,11 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
 
     [SerializeField] private float time = 0.1f;
-    [SerializeField] private bool isPlayerTrun = true;
+    [SerializeField] private bool isPlayerTurn = true;
 
-    public bool IsPlayerTrun { get => isPlayerTrun; }
+    [SerializeField] private int entityNum = 0;
+    [SerializeField] private List<Entity> entities = new List<Entity>();
+    public bool IsPlayerTurn { get => isPlayerTurn; }
 
     void Awake()
     {
@@ -23,20 +25,46 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void Start()
+    private void StartTurn()
     {
-        Instantiate(Resources.Load<GameObject>("Player")).name = "Player";
+        // Debug.Log($"{entities[entityNum].name} starts its turn!");
+        if (entities[entityNum].GetComponent<Player>())
+            isPlayerTurn = true;
+        else if (entities[entityNum].IsSentient)
+        {
+            // Because AI not yet, so let their doing skip turn
+            Action.SkipAction(entities[entityNum]);
+        }
     }
 
     public void EndTurn()
     {
-        isPlayerTrun = false;
-        StartCoroutine(WaitForTurn());
+        // Debug.Log($"{entities[entityNum].name} ends its turn!");
+        if(entities[entityNum].GetComponent<Player>())
+            isPlayerTurn = false;
+
+        // next entity turn
+        if(entityNum == entities.Count - 1)
+            entityNum = 0;
+        else
+            entityNum++;
+
+        StartCoroutine(TurnDelay());
     }
 
-    private IEnumerator WaitForTurn()
+    private IEnumerator TurnDelay()
     {
         yield return new WaitForSeconds(time);
-        isPlayerTrun=true;
+        StartTurn();
+    }
+
+    public void AddEntity(Entity entity)
+    {
+        entities.Add(entity);
+    }
+
+    public void InsertEntity(Entity entity, int index)
+    {
+        entities.Insert(index, entity);
     }
 }
